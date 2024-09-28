@@ -1,0 +1,503 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+typedef struct stunode
+{
+	int salary;
+	int year,month,day;
+	char sfname[10];
+	char job_title[10];
+	char sfdepart[10],sfnum[10];
+	struct stunode *next;
+	int judge_depart;
+}STU;
+STU head;
+void showmenu();
+void createlist(int);
+STU* findlist(  char *in);
+void changenum();
+void deletenum();
+void printlist(int);
+void preservefile( );
+void statistics(int select);
+int check();
+int main()
+{
+	int select;
+	head.next=NULL;
+	while(1)
+	{
+		showmenu();
+		printf("请选择需要的操作\n");
+		scanf("%d",&select);
+		fflush(stdin);
+		
+		switch (select) {
+			
+			case 1:createlist(2);break;
+			
+			case 2:printlist(1); break;
+			
+			case 3:printlist(2);break;
+			
+			case 4:changenum();break;
+			
+			case 5:	deletenum();break;
+			
+			case 6:createlist(1);break;
+			
+			case 7:preservefile();break;
+			
+			case 8:statistics(1);break;
+			
+			case 9:statistics(3);break;
+			
+			case 10:statistics(2);break;
+			
+			case 11:printlist(3);break;
+			
+			case 0:return 0;
+			default:printf("请重新输入\n");
+			break;
+		}
+		system("pause");
+	}
+}
+int  check()                                        //返回1则说明职工号重复，返回2说明时间格式错误，返回0则说明无问题
+{
+	//检查职工号的唯一性 
+	STU*p=head.next,*p1=p,*p2;
+	int judge=0;
+	while(p!=NULL)                               //judge_depart全赋为0
+	{
+		p->judge_depart=0;
+		p=p->next;
+	}
+	while(p1!=NULL)                            //将一个职工的职工号与所有的职工号比较，相同则将judge_depart赋为1
+	{
+		p2=p1->next;
+		while(p2!=NULL)
+		{
+			if(!strcmp(p1->sfnum,p2->sfnum))
+				p1->judge_depart=1;
+			p2=p2->next;
+		}
+		if(p1->judge_depart==1) 
+		{
+			
+			judge=1;
+			break;
+		}
+		p1=p1->next;
+	}
+	STU*p3=head.next;
+	while(p3!=NULL)                                            //简单判断日期合法性
+	{
+		char month_judge[12]={31,28,31,30,31,30,31,31,30,31,30,31};
+		if(p3->month==2)
+			(((p3->year%4==0)&&(p3->year%100!=0))||(p3->year%400==0))?month_judge[1]+=1:month_judge[1];
+		if(p3->month>12||p3->month<1||p3->day>month_judge[p3->month-1]||p3->day<1)
+		{
+			judge=2;
+			break;
+		}
+		p3=p3->next;
+	}
+	if(judge==1) return 1;
+	else if(judge==2) return 2;
+	return 0;
+}
+void showmenu()                                         //实现菜单面板
+{
+	system("cls");
+	printf("*****职工管理系统*****\n");
+	printf("     1.从键盘输入职工信息\n");
+	printf("     2.输入职工号搜索职工信息\n");
+	printf("     3.输入工作部门，显示该工作部门的职工\n");
+	printf("     4.输入职工号修改职工信息\n");
+	printf("     5.输入职工号删除职工信息\n");
+	printf("     6.从文件输入职工信息\n");
+	printf("     7.把职工信息存入文件\n");
+	printf("     8.统计每个部门人数\n");
+	printf("     9.统计每个职称人数\n");
+	printf("     10.统计平均工资\n");
+	printf("     11.输出所有信息\n");
+	printf("     0.退出\n");
+}
+void statistics(int select)//传参为1统计部门人数，为2统计平均工资，否则各职称人数
+{
+	if(head.next==NULL)
+		printf("信息未输入，请输入信息再尝试该操作\n");
+	else{
+		
+		STU *p=head.next;
+		char tmp[20][10]={0};
+		if(select==1)
+		{   STU *p1=head.next;
+			int i=0,count=0;
+			while(p1!=NULL)                                                  //赋零用于判断部门名字是否存入数组
+			{
+				p1->judge_depart=0;
+				p1=p1->next;
+				i++;
+			}
+			while(p!=NULL)
+			{
+				
+				if(p->judge_depart==0)
+				{
+					
+					strcpy(tmp[count],p->sfdepart);
+					count++;
+					p->judge_depart=count+1;
+					STU*p2=head.next;
+					while(p2!=NULL)
+					{
+						if(!strcmp(p2->sfdepart,p->sfdepart))
+							p2->judge_depart=p->judge_depart;
+						p2=p2->next;
+					}
+				}
+				p=p->next;
+			}
+			
+			
+			printf("工作部门    人数\n");
+			
+			for(int tmp1=0;tmp1<count;tmp1++)								//找出对应部门所属人数并输出
+			{
+				p=head.next;
+				int num=0;
+				while(p!=NULL)
+				{
+					if(!strcmp(p->sfdepart,tmp[tmp1]))
+						num++;
+					p=p->next;
+				}
+				
+				printf("%s       %d\n",tmp[tmp1],num);
+			}
+			
+		}
+		else if(select==2){
+			
+			double	salary=0;
+			int num=0;
+			while(p!=NULL)
+			{
+				salary+=p->salary;
+				num++;
+				p=p->next;
+			}
+			printf("平均薪水为：%.2lf\n",salary/num);
+		}
+		else {
+			STU *p1=head.next;
+			int i=0,count=0;
+			while(p1!=NULL)                                                  //赋零用于判断部门名字是否存入数组
+			{
+				p1->judge_depart=0;
+				p1=p1->next;
+				i++;
+			}
+			while(p!=NULL)
+			{
+				
+				if(p->judge_depart==0)
+				{
+					
+					strcpy(tmp[count],p->job_title);
+					count++;
+					p->judge_depart=count+1;
+					STU*p2=head.next;
+					while(p2!=NULL)
+					{
+						if(!strcmp(p2->job_title,p->job_title))
+							p2->judge_depart=p->judge_depart;
+						p2=p2->next;
+					}
+				}
+				p=p->next;
+			}
+			
+			printf("职称      人数\n");
+			for(int tmp1=0;tmp1<count;tmp1++)								//找出对应部门所属人数并输出
+			{
+				
+				p=head.next;
+				int num=0;
+				while(p!=NULL)
+				{
+					if(!strcmp(p->job_title,tmp[tmp1]))
+						num++;
+					p=p->next;
+				}
+				
+				printf("%s       %d\n",tmp[tmp1],num);
+			}
+			
+		}
+	}
+}
+void preservefile()
+{if(head.next==NULL) printf("请输入信息后再尝试该操作\n");
+	else{
+		printf("输入Y保存职工信息\n");
+		char select;
+		scanf("%c",&select);
+		if(select=='Y')
+		{
+			printf("请输入信息要存进的文件路径\n");
+			char filename[20];
+			getchar();
+			gets(filename);
+			FILE *fp;
+			if((fp=fopen(filename,"w"))==NULL)
+			{
+				printf("打开文件失败\n");
+				return;
+			}
+			STU *p=head.next;
+			while(p!=NULL)
+			{
+				fprintf(fp,"%s%9s%10s%11s       %d年%d月%d日   %d\n",p->sfnum,p->sfdepart,p->sfname,p->job_title,p->year,p->month,p->day,p->salary);
+				p=p->next;
+			}
+			printf("保存成功\n");
+			fclose(fp);
+			
+		}
+		else printf("取消成功\n");
+	}
+}
+STU* findlist(  char *in)
+{
+	STU *tmp=head.next;
+	
+	while(tmp!=NULL)
+	{
+		
+		if(!strcmp(tmp->sfnum,in)) break;
+		tmp=tmp->next;
+	}
+	
+	return tmp;
+}
+void changenum()
+{
+	
+	if(head.next==NULL) 
+	{
+		printf("未输入职工信息\n");
+		return;
+	}
+	char num[10],select;
+	printf("输入大写Y确认修改，除Y以外字母取消修改\n");
+	scanf("%c",&select);
+	if(select=='Y')
+	{
+		STU *p,perserve;
+		printf("请输入要修改的职工信息的职工号\n");
+		scanf("%s",num);
+		p=findlist(num);
+		if(findlist(num)!=NULL)
+		{   perserve=*p;
+			printf("请输入要修改成的信息\n");
+			printf("请按以下格式输入：职工号        工作部门       姓名         职称     2000(年).11(月)5.(日)         薪水  \n");
+			scanf("%s%s%s%s%d%d%d%d",p->sfnum,p->sfdepart,p->sfname,p->job_title,&p->year,&p->month,&p->day,&p->salary);
+			int checkvaule=check();
+			if(checkvaule==1)
+			{
+				*p=perserve;
+				printf("职工号不唯一，请保持职工号唯一性再重新尝试修改\n");
+			}
+			else if(checkvaule==2)
+			{
+				*p=perserve;
+				printf("时间不合法，请保持时间的合法性再重新尝试修改\n");
+			}
+			else 	printf("修改完成\n");
+		}
+		else printf("该信息不存在\n");
+	}
+	else printf("取消成功\n");
+}
+void deletenum()
+{
+	
+	if(head.next==NULL) 
+	{
+		printf("未输入职工信息\n");
+		return;
+	}
+	char num[10],select;
+	if(head.next==NULL) 
+	{
+		printf("未输入职工信息\n");
+		return;
+	}
+	printf("输入大写Y确认删除，除Y以外字母取消删除\n");
+	scanf("%c",&select);
+	if(select=='Y')
+	{  
+		printf("请输入要删除的职工信息的职工号\n");
+		scanf("%s",num);
+		STU *tmp=head.next,*plast,*pnext;
+		while(tmp!=NULL)
+		{	
+			
+			if(!strcmp(tmp->sfnum,num)) 
+			{
+				pnext=tmp->next;
+				break;
+			}
+			plast=tmp;
+			tmp=tmp->next;
+			
+		}
+		
+		if(tmp==NULL) printf("无该职工信息\n");
+		else {
+			if(tmp==head.next) head.next=pnext;
+			else	
+			{
+				plast->next=pnext;
+			}
+			free(tmp);
+			printf("删除成功\n");
+		}	
+	}
+	else printf("取消成功\n");
+}
+void createlist(int select)//传参1用文件输入，否则用键盘输入
+{
+	int n;
+	char filename[20];
+	STU *p,*tail;
+	if(head.next!=NULL) 
+	{
+		printf("职工信息已经创建过！\n");
+		
+	}
+	else
+	{
+		
+		tail=&head;
+		printf("请输入职工人数： \n");
+		scanf("%d",&n);
+		if(select==1){
+			printf("请按以下格式输入：职工号        工作部门       姓名         职称     （年） （月） （日）          薪水  \n");
+			printf("请输入文件路径\n");
+			getchar();
+			gets(filename);
+			
+			FILE *fp;
+			fp=fopen(filename,"r");
+			if(fp==NULL) 
+			{
+				printf("文件打开失败\n");
+				exit(0);
+			}
+			for(;n>0;n--)
+			{
+				p=(STU*)malloc(sizeof(STU));
+				if(p==NULL) 
+				{
+					printf("建立链表时分配内存失败！\n");
+					return ;
+				}
+				fscanf(fp,"%s%s%s%s%d%d%d%d",p->sfnum,p->sfdepart,p->sfname,p->job_title,&p->year,&p->month,&p->day,&p->salary);
+				tail->next=p;                  
+				p->next=NULL;
+				tail=p;
+			}
+			fclose(fp);
+		}	
+		else
+		{
+			printf("请按以下格式输入：职工号        工作部门       姓名         职称     （年） （月） （日）          薪水  \n");
+			for(;n>0;n--)
+			{
+				p=(STU*)malloc(sizeof(STU));
+				if(p==NULL) 
+				{
+					printf("建立链表时分配内存失败！\n");
+					return ;
+				}
+				scanf("%s%s%s%s%d%d%d%d",p->sfnum,p->sfdepart,p->sfname,p->job_title,&p->year,&p->month,&p->day,&p->salary);
+				tail->next=p;
+				p->next=NULL;
+				tail=p;
+			}
+		}
+		int checkvaule=check();
+		if(checkvaule!=0)                                
+		{
+			printf("\n");
+			printf("\n");
+			if(checkvaule==1)
+				printf("职工号不唯一，请保持职工号唯一性再重新尝试输入\n");
+			else printf("时间不合法，请保持时间的合法性再重新尝试输入\n");
+			STU*p=head.next,*p1;
+			while(p!=NULL)
+			{
+				p1=p;
+				p=p->next;
+				free(p1);
+			}
+			head.next=NULL;
+		}
+		else   printf("创建成功\n");
+	}
+	
+}
+void printlist(int tmp1)//传1输出一个职工信息，否则输出部门职工信息
+{
+	STU *p;
+	if(head.next==NULL) 
+	{
+		printf("未输入职工信息\n");
+		return;
+	}
+	p=head.next;
+	
+	if(tmp1==1){
+		printf("请输入职工号\n");
+		//TODO
+		char tmp2[10];
+		scanf("%s",tmp2);
+		STU*tmp3=findlist(tmp2);
+		if(tmp3!=NULL)
+		{
+			printf("职工号     工作部门    姓名       职称       入场时间        工资   \n");
+			printf("%s%9s%10s%11s       %d年%d月%d日   %d\n",tmp3->sfnum,tmp3->sfdepart,tmp3->sfname,tmp3->job_title,tmp3->year,tmp3->month,tmp3->day,tmp3->salary);
+		}
+		else printf("该职工信息不存在\n");
+	}
+	else	if(tmp1==2)
+	{   char depaname[10];
+		int judge=0;
+		printf("请输入工作部门\n");
+		scanf("%s",depaname);
+		printf("职工号     工作部门    姓名       职称       入场时间        工资   \n");
+		while(p!=NULL)
+		{
+			if(!strcmp(depaname,p->sfdepart))
+			{
+				
+				judge=1;
+				printf("%s%9s%10s%11s       %d年%d月%d日   %d\n",p->sfnum,p->sfdepart,p->sfname,p->job_title,p->year,p->month,p->day,p->salary);
+			}
+			p=p->next;
+		}
+		if(judge==0) printf("该工作部门无员工\n");
+	}
+	else {
+		STU *p=head.next;
+		while(p!=NULL)
+		{printf("%s%9s%10s%11s       %d年%d月%d日   %d\n",p->sfnum,p->sfdepart,p->sfname,p->job_title,p->year,p->month,p->day,p->salary);
+			p=p->next;
+		}
+		
+	}
+}
